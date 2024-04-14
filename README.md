@@ -1,11 +1,35 @@
 # Terrain Modifier for Cities Skyline II
 # 城市天际线II地形美化工具
 
-The Terrain Modifier for Cities Skyline II is a Python-based tool using Streamlit, designed to enhance and adjust terrain heightmaps for use in the game "Cities Skyline II". It provides users with a variety of parameters to tweak and apply different terrain characteristics such as noise adjustment, erosion effects, and custom terrain anchoring. The modified map with rain erosion applied will have exceptionally realistic terrain effects.
+The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Streamlit, designed to enhance and adjust terrain heightmaps for use in the game "Cities Skyline II". It provides users with a variety of parameters to tweak and apply different terrain characteristics such as noise adjustment, erosion effects, and custom terrain anchoring. The modified map with rain erosion applied will have exceptionally realistic terrain effects.
 
 城市天际线II地形修改器是一个基于Python的工具，旨在增强和调整由游戏《城市天际线II》生成的地形高程图。它为用户提供了各种参数，可以调整和应用不同的地形特征，如噪声调整、侵蚀效果和自定义地形锚定。施加了雨水侵袭过程的修改地图将会拥有极佳的真实地形效果。
 
+## Instructions / 使用方法
 
+1. Open CS2. Use the map editor to roughly adjust the terrain's height by raising or lowering it. Detailed terrain changes manually in-game are unnecessary. The algorithm will add details to the rough map later.
+
+打开CS2。使用地图编辑器大致抬高或降低地形的高度。在游戏中不需要手动进行详细的地形更改。算法将在稍后向粗略地图添加细节。
+
+2. Export the height map. Open the following folder: "C:\Users%username\AppData\LocalLow\Colossal Order\Cities Skylines II\Heightmaps". You should see the height map that you just exported.
+
+导出高度图。打开以下文件夹：“C:\Users%username\AppData\LocalLow\Colossal Order\Cities Skylines II\Heightmaps”。您应该看到刚刚导出的高度图。
+
+3. Open the [Terrain Modifier for Cities Skyline II](https://cs2terrain.streamlit.app/). Upload the height map that you just exported.
+
+打开城市天际线II地形修改器。上传刚刚导出的地形修改器。
+
+4. Customize the parameters. For optimal in-game terrain performance, enable rain erosion with a resize dimension $\leq$ 512. When you find the output terrain meets your requirements, export the output height map to the same folder.
+
+自定义调整参数。为了获得最佳的游戏地形性能，请将雨水侵蚀功能打开，并将缩放尺寸设为 $\leq$ 512。当您发现输出地形满足您的要求时，将输出高度图导出到同一文件夹。
+
+5. Restart the game and enter the map editor. Import the exported height map in-game. Use the in-game blur brush to gently blur the entire map. This should give you a randomly generated unique map with vivid mountains.
+
+重新启动游戏并进入地图编辑器。在游戏中导入导出的高度图。使用游戏内的模糊画笔轻轻涂抹整个地图。这样应该会给您一个独一无二的拥有壮丽山脉的随机生成地图。
+
+6. Build your city as you wish. Enjoy!
+
+尽情建设您的城市吧！
 
 ## Parameter Instruction / 参数控制
 
