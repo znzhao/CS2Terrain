@@ -1,9 +1,8 @@
+opencv-python-headless
 streamlit
-opencv-python
 plotly
 pandas
 numpy
 matplotlib
 tqdm
 scipy
-libgl1-mesa-glx
