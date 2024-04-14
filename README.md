@@ -51,7 +51,9 @@ The ocean and mountain anchor is fixed at 0% and 100% of the possible height all
 
 ### Rain Erosion / 雨水侵蚀作用
 
-Attension! Applying rain erosion is crucial to generating more realistic terrain. However, applying rain erosion could significantly affect the amount of time for the algorithm to run. For best performance, turn on the erosion with resize dimension smaller than or equal to 512, but turn it off for larger dimensions.
+**Attension! Applying rain erosion is crucial to generating more realistic terrain. However, applying rain erosion could significantly affect the amount of time for the algorithm to run. For best performance, turn on the erosion with resize dimension smaller than or equal to 512, but turn it off for larger dimensions.**
+
+**注意！施加雨水侵蚀对生成更逼真的地形至关重要。然而，施加雨水侵蚀可能会显著影响算法的运行时间。为了获得最佳性能，在缩放精度小于或等于512的情况下打开侵蚀，但对于更大的尺寸则应选择关闭。**
 
 1. **Apply Rain Erosion / 施加雨水侵蚀:**
     - This parameter toggles the application of rain erosion on the terrain. When enabled, rain erosion will be applied to the terrain, modifying its features over time.
