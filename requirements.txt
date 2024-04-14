@@ -1,0 +1,10 @@
+streamlit
+opencv-python
+plotly
+pygithub
+pandas
+numpy
+matplotlib
+tqdm
+scipy
+scikit-learn
