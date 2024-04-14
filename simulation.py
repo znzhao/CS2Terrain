@@ -130,7 +130,7 @@ def main(argv, full_width = 200, dim = 256, rain_rate = 0.0008, evaporation_rate
       util.save_as_png(terrain, output_path)
     my_bar.progress(i/iterations, text=progress_text)
 
-  my_bar.progress(1, text=progress_text2)
+  my_bar.progress(100, text=progress_text2)
   return util.normalize(terrain)
 
   
