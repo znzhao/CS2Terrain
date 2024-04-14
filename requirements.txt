@@ -1,10 +1,9 @@
 streamlit
 opencv-python
 plotly
-pygithub
 pandas
 numpy
 matplotlib
 tqdm
 scipy
-scikit-learn
+libgl1-mesa-glx
