@@ -5,13 +5,7 @@ The Terrain Modifier for Cities Skyline II is a Python-based tool using Streamli
 
 城市天际线II地形修改器是一个基于Python的工具，旨在增强和调整由游戏《城市天际线II》生成的地形高程图。它为用户提供了各种参数，可以调整和应用不同的地形特征，如噪声调整、侵蚀效果和自定义地形锚定。施加了雨水侵袭过程的修改地图将会拥有极佳的真实地形效果。
 
-## Features
-- Interactive UI: Built using Streamlit, the tool provides a user-friendly interface for adjusting terrain settings.
-- Multi-Language Support: Supports both English and Chinese languages.
-- Custom Terrain Generation: Allows the user to manipulate terrain using noise and smoothing filters.
-- Erosion Simulation: Apply rain erosion effects to simulate natural terrain erosion.
-- 3D Visualization: Toggle between 2D and 3D views to visualize the terrain.
-- Custom Anchors: Dynamically add or remove anchors to shape the terrain's height profile.
+
 
 ## Parameter Instruction / 参数控制
 
