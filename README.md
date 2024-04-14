@@ -136,7 +136,7 @@ This program modifies the height map generated from CS2 according to the followi
 
 7. Resize the map to $4096 \times 4096$. Apply another Gaussian blur to the height map to refine the map for resizing.
 
-   将地图调整大小为$4096 \times 4096$。对高度图应用另一个高斯模糊，以便为调整大小的地图进行精磨。
+   将地图调整大小为 $4096 \times 4096$。对高度图应用另一个高斯模糊，以便为调整大小的地图进行精磨。
 
 ## MIT License / 版权声明
 Copyright (c) 2024 Zhenning Zhao
