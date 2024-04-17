@@ -204,7 +204,7 @@ if st.session_state.output_height is not None:
         col1.download_button(label="Download World Map" if not CHN else "下载世界地图", data = fileWM, file_name='World Map.png', mime="image/png",type = 'primary', use_container_width = True)
 
     terrain = cv2.resize(worldmap[1536:-1536, 1536:-1536], (4096, 4096), interpolation=cv2.INTER_CUBIC)
-    terrain = cv2.GaussianBlur(terrain, revise_kernel/2, 0)
+    terrain = cv2.GaussianBlur(terrain, (int(ks2/2)-1, int(ks2/2)-1), 0)
     terrain = terrain.astype(np.uint16)
     is_success, buffer = cv2.imencode(".png", terrain)
     io_buf = io.BytesIO(buffer)
