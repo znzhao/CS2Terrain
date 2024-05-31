@@ -15,23 +15,25 @@ from generator import *
 import base64
 
 st.set_page_config(layout="wide")
-custom_html = """
-<div class="banner">
-    <img src="https://raw.githubusercontent.com/znzhao/CS2Terrain/main/fig/plain.png" alt="Banner Image">
-</div>
-<style>
-    .banner {
-        width: 160%;
-        height: 400px;
-        overflow: hidden;
-    }
-    .banner img {
-        width: 75%;
-        object-fit: cover;
-    }
-</style>
-"""
-st.components.v1.html(custom_html)
+
+if False:
+	custom_html = """
+	<div class="banner">
+	    <img src="https://raw.githubusercontent.com/znzhao/CS2Terrain/main/fig/plain.png" alt="Banner Image">
+	</div>
+	<style>
+	    .banner {
+	        width: 160%;
+	        height: 400px;
+	        overflow: hidden;
+	    }
+	    .banner img {
+	        width: 75%;
+	        object-fit: cover;
+	    }
+	</style>
+	"""
+	st.components.v1.html(custom_html)
 
 # Sidebar content
 CHN = st.sidebar.toggle('CHN/中文', value = False)
