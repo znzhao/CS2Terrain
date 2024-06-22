@@ -1,7 +1,7 @@
 opencv-python-headless
 streamlit
 scipy
-st_dimensions
+streamlit-dimensions
 plotly
 pandas
 numpy
