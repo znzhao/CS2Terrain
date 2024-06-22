@@ -1,7 +1,5 @@
 import cv2
-from tqdm import tqdm
-import numpy as np
-import matplotlib.pyplot as plt
+from scipy.interpolate import PchipInterpolator
 import simulation
 import sys
 import util
@@ -25,13 +23,13 @@ def processTerrain(sorted_intplx, sorted_loudness, dim, seed, ksize, init_size, 
                    evaporation_rate, min_height_delta, repose_slope, gravity, min_altitude, max_altitude, input_height = None, 
                    progress_text = None, progress_text2 = None):
     input_height = cv2.blur(input_height, ksize)
-    fadeintplvec = np.vectorize(lambda x: fadeintpl(x, sorted_intplx, sorted_loudness))
-    scaler = fadeintplvec(input_height)
+    fadeintplvec = PchipInterpolator(sorted_intplx, sorted_loudness)
     shape = [dim] * 2
     details = util.fbm(shape, -2.0, seed=seed)
 
     # apply the noise on the map
-    terrain = init_size*input_height + noise_size*scaler*details
+    terrain = init_size*input_height + noise_size*details
+    terrain = fadeintplvec(terrain)
     # rain erode
     if erosion:
         terrain = simulation.main(sys.argv, 
