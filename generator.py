@@ -23,7 +23,7 @@ def processTerrain(sorted_intplx, sorted_loudness, dim, seed, ksize, init_size, 
                    evaporation_rate, min_height_delta, repose_slope, gravity, min_altitude, max_altitude, input_height = None, 
                    progress_text = None, progress_text2 = None):
     input_height = cv2.blur(input_height, ksize)
-    fadeintplvec = PchipInterpolator(sorted_intplx, sorted_loudness)
+    fadeintplvec = PchipInterpolator(sorted_intplx/100, sorted_loudness/100)
     shape = [dim] * 2
     details = util.fbm(shape, -2.0, seed=seed)
 
@@ -44,4 +44,5 @@ def processTerrain(sorted_intplx, sorted_loudness, dim, seed, ksize, init_size, 
                                   progress_text = progress_text,
                                   progress_text2 = progress_text2)
     terrain = util.normalize(terrain, bounds = (min_altitude/4000, max_altitude/4000))
+    terrain = fadeintplvec(terrain)
     return terrain
