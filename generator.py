@@ -44,5 +44,4 @@ def processTerrain(sorted_intplx, sorted_loudness, dim, seed, ksize, init_size, 
                                   progress_text = progress_text,
                                   progress_text2 = progress_text2)
     terrain = util.normalize(terrain, bounds = (min_altitude/4000, max_altitude/4000))
-    terrain = fadeintplvec(terrain)
     return terrain
