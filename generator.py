@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from scipy.interpolate import PchipInterpolator
 import simulation
 import sys
@@ -23,7 +24,7 @@ def processTerrain(sorted_intplx, sorted_loudness, dim, seed, ksize, init_size, 
                    evaporation_rate, min_height_delta, repose_slope, gravity, min_altitude, max_altitude, input_height = None, 
                    progress_text = None, progress_text2 = None):
     input_height = cv2.blur(input_height, ksize)
-    fadeintplvec = PchipInterpolator(sorted_intplx/100, sorted_loudness/100)
+    fadeintplvec = PchipInterpolator(sorted_intplx, sorted_loudness) # bus here
     shape = [dim] * 2
     details = util.fbm(shape, -2.0, seed=seed)
 
