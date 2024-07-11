@@ -27,8 +27,14 @@ if 'submitted' not in st.session_state:
 if 'input_terrain' not in st.session_state:
     st.session_state.input_terrain = np.ones(shape=(4096, 4096))*12.5/100*4000
 
+if 'erode_terrain' not in st.session_state:
+    st.session_state.erode_terrain = None
+
 if 'output_terrain' not in st.session_state:
     st.session_state.output_terrain = None
+
+if 'params' not in st.session_state:
+    st.session_state.params = None
 
 def gen_basic_panel(CHN):
     basic_panel = st.expander("Basics" if not CHN else "基础参数")
@@ -43,66 +49,6 @@ def gen_basic_panel(CHN):
                                                 help='The altitude range for the output terrain. As a reference, the default plain height is 500 meters.'
                                                 if not CHN else "输出地图的海拔范围。作为参考，游戏地形编辑器中的默认海平面高度为500米。")
     return seed, noise_weight, min_altitude, max_altitude
-
-def gen_spline_panel(CHN, sidebar_width, min_altitude, max_altitude):
-    def increment_counter():
-        st.session_state.intpl_val_outnum += 1
-    def decrement_counter():
-        if st.session_state.intpl_val_outnum > 0:
-            st.session_state.intpl_val_outnum -= 1
-        else:
-            st.session_state.intpl_val_outnum = 0
-    
-    spline_panel = st.expander("Spline Curve" if not CHN else "样条曲线")
-    with spline_panel:
-        if not CHN:
-            st.info('By changing the x percentage of the terrain height into the pecent of y, the spline function will change the flatness of the map')
-        else:
-            st.info('通过将输入高度转换为输出高度，样条曲线将会改变输出地图的平坦度。')
-        colx, coly = st.columns(2)
-        ocean_x = colx.number_input('Ocean Anchor (m)' if not CHN else "海洋锚点 (米)", value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
-        ocean_y = coly.number_input('Ocean Altitude (m)' if not CHN else "海洋输出 (米)", value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_lower_x = colx.number_input('Plain Lower Anchor (m)' if not CHN else "平原下界锚点 (米)", value=450.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_lower_y = coly.number_input('Plain Lower Altitude (m)' if not CHN else "平原下界输出 (米)", value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_upper_x = colx.number_input('Plain Upper Anchor (m)' if not CHN else "平原上界锚点 (米)", value=550.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_upper_y = coly.number_input('Plain Upper Altitude (m)' if not CHN else "平原上界输出 (米)", value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        mount_x = colx.number_input('Mount Anchor (m)' if not CHN else "山脉锚点 (米)", value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
-        mount_y = coly.number_input('Mount Altitude (m)' if not CHN else "山脉输出 (米)", value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-
-        intpl_x = [ocean_x, plain_lower_x, plain_upper_x, mount_x]
-        intpl_y = [ocean_y, plain_lower_y, plain_upper_y, mount_y]
-
-        if st.session_state.intpl_val_outnum > 0:
-            key_xs = [str("Additional Anchor "+str(i)) for i in range(st.session_state.intpl_val_outnum)]
-            key_ys = [str("Additional Altitude "+str(i)) for i in range(st.session_state.intpl_val_outnum)]
-            value_xs = [colx.number_input('Additional Anchor (米)' if not CHN else '额外锚点 (米)', value=0.0,
-                                          min_value=0.0, max_value=4000.0, step = 1.0, key = key_xs[i]) for i in range(st.session_state.intpl_val_outnum)]
-            value_ys = [coly.number_input('Adjusted Altitude (米)' if not CHN else '输出高度 (米)', value=0.0,
-                                           min_value=0.0, max_value=4000.0, step = 1.0, key = key_ys[i]) for i in range(st.session_state.intpl_val_outnum)]
-            intpl_x = intpl_x + [x for x in value_xs]
-            intpl_y = intpl_y + [y for y in value_ys]
-        colx.button('Add Anchor' if not CHN else "增加锚点", on_click=increment_counter)
-        coly.button('Delete Anchor' if not CHN else "减少锚点", on_click=decrement_counter, disabled=st.session_state.intpl_val_outnum==0)
-        intpl_y = [intpl_y[i] for i in sorted(range(len(intpl_x)), key=lambda x: intpl_x[x])]
-        intpl_x = sorted(intpl_x)
-        intpl_x, intpl_y = remove_duplicates(intpl_x, intpl_y)
-        intpl_func = PchipInterpolator(intpl_x, intpl_y)
-        oneline = np.linspace(min_altitude, max_altitude, 50).tolist()
-        curve = intpl_func(oneline)
-        showdata = pd.DataFrame([curve]).T
-        colname = 'Initial Height (m)' if not CHN else "初始高度 (米)"
-        indname = 'Adjusted Height (m)' if not CHN else "调整高度 (米)"
-        showdata.columns = [colname]
-        showdata.index = oneline
-        showdata.index.name = indname
-        
-        fig = px.line(showdata, y = colname)
-        fig.layout.xaxis.fixedrange = True
-        fig.layout.yaxis.fixedrange = True
-        fig.update_layout(autosize=True, height = sidebar_width)
-        fig.update_layout(title={'text': 'Spline Curve' if not CHN else '样条曲线', 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'})
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    return intpl_func
 
 def gen_erosion_panel(CHN):
     erosion_panel = st.sidebar.expander("Erosion Parameters" if not CHN else "侵蚀参数")
@@ -158,6 +104,86 @@ def gen_erosion_panel(CHN):
         }
         return erosion_params
 
+def gen_spline_panel(CHN, sidebar_width, min_altitude, max_altitude):
+    def increment_counter():
+        st.session_state.intpl_val_outnum += 1
+    def decrement_counter():
+        if st.session_state.intpl_val_outnum > 0:
+            st.session_state.intpl_val_outnum -= 1
+        else:
+            st.session_state.intpl_val_outnum = 0
+    
+    spline_panel = st.expander("Spline Curve" if not CHN else "样条曲线")
+    with spline_panel:
+        if not CHN:
+            st.info('By changing the x percentage of the terrain height into the pecent of y, the spline function will change the flatness of the map')
+        else:
+            st.info('通过将输入高度转换为输出高度，样条曲线将会改变输出地图的平坦度。')
+        colx, coly = st.columns(2)
+        ocean_lower_x = colx.number_input('Ocean Lower Anchor (m)' if not CHN else "海洋下届锚点 (米)", 
+                                          value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
+        ocean_lower_y = coly.number_input('Ocean Lower Altitude (m)' if not CHN else "海洋下届输出 (米)", 
+                                          value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        ocean_upper_x = colx.number_input('Ocean Upper Anchor (m)' if not CHN else "海洋上界锚点 (米)", 
+                                          value=300.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        ocean_upper_y = coly.number_input('Ocean Upper Altitude (m)' if not CHN else "海洋上界输出 (米)", 
+                                          value=300.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_lower_x = colx.number_input('Plain Lower Anchor (m)' if not CHN else "平原下界锚点 (米)", 
+                                          value=325.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_lower_y = coly.number_input('Plain Lower Altitude (m)' if not CHN else "平原下界输出 (米)", 
+                                          value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_x       = colx.number_input('Plain Anchor (m)' if not CHN else "平原锚点 (米)", 
+                                          value=525.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_y       = coly.number_input('Plain Altitude (m)' if not CHN else "平原输出 (米)", 
+                                          value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_upper_x = colx.number_input('Plain Upper Anchor (m)' if not CHN else "平原上界锚点 (米)", 
+                                          value=800.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        plain_upper_y = coly.number_input('Plain Upper Altitude (m)' if not CHN else "平原上界输出 (米)", 
+                                          value=600.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        mount_lower_x = colx.number_input('Mount Lower Anchor (m)' if not CHN else "山脉下届锚点 (米)", 
+                                          value=1200.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        mount_lower_y = coly.number_input('Mount Lower Altitude (m)' if not CHN else "山脉下届输出 (米)", 
+                                          value=1000.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+        mount_upper_x = colx.number_input('Mount Upper Anchor (m)' if not CHN else "山脉上界锚点 (米)", 
+                                          value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
+        mount_upper_y = coly.number_input('Mount Upper Altitude (m)' if not CHN else "山脉上界输出 (米)", 
+                                          value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
+
+        intpl_x = [ocean_lower_x, ocean_upper_x, plain_lower_x, plain_x, plain_upper_x, mount_lower_x, mount_upper_x]
+        intpl_y = [ocean_lower_y, ocean_upper_y, plain_lower_y, plain_y, plain_upper_y, mount_lower_y, mount_upper_y]
+
+        if st.session_state.intpl_val_outnum > 0:
+            key_xs = [str("Additional Anchor "+str(i)) for i in range(st.session_state.intpl_val_outnum)]
+            key_ys = [str("Additional Altitude "+str(i)) for i in range(st.session_state.intpl_val_outnum)]
+            value_xs = [colx.number_input('Additional Anchor (m)' if not CHN else '额外锚点 (米)', value=0.0,
+                                          min_value=0.0, max_value=4000.0, step = 1.0, key = key_xs[i]) for i in range(st.session_state.intpl_val_outnum)]
+            value_ys = [coly.number_input('Adjusted Altitude (m)' if not CHN else '输出高度 (米)', value=0.0,
+                                           min_value=0.0, max_value=4000.0, step = 1.0, key = key_ys[i]) for i in range(st.session_state.intpl_val_outnum)]
+            intpl_x = intpl_x + [x for x in value_xs]
+            intpl_y = intpl_y + [y for y in value_ys]
+        colx.button('Add Anchor' if not CHN else "增加锚点", on_click=increment_counter)
+        coly.button('Delete Anchor' if not CHN else "减少锚点", on_click=decrement_counter, disabled=st.session_state.intpl_val_outnum==0)
+        intpl_y = [intpl_y[i] for i in sorted(range(len(intpl_x)), key=lambda x: intpl_x[x])]
+        intpl_x = sorted(intpl_x)
+        intpl_x, intpl_y = remove_duplicates(intpl_x, intpl_y)
+        intpl_func = PchipInterpolator(intpl_x, intpl_y)
+        oneline = np.linspace(min_altitude, max_altitude, 50).tolist()
+        curve = intpl_func(oneline)
+        showdata = pd.DataFrame([curve]).T
+        colname = 'Initial Height (m)' if not CHN else "初始高度 (米)"
+        indname = 'Adjusted Height (m)' if not CHN else "调整高度 (米)"
+        showdata.columns = [colname]
+        showdata.index = oneline
+        showdata.index.name = indname
+        
+        fig = px.line(showdata, y = colname)
+        fig.layout.xaxis.fixedrange = True
+        fig.layout.yaxis.fixedrange = True
+        fig.update_layout(autosize=True, height = sidebar_width)
+        fig.update_layout(title={'text': 'Spline Curve' if not CHN else '样条曲线', 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    return intpl_func
+
 def gen_sidebar():
     def onclick_submit():
         st.session_state.submitted = True
@@ -167,27 +193,39 @@ def gen_sidebar():
         sidebar_width = st_dimensions(key="sidebar")
         sidebar_width = sidebar_width['width'] if sidebar_width is not None else 700
         seed, noise_weight, min_altitude, max_altitude = gen_basic_panel(CHN)
-        intpl_func = gen_spline_panel(CHN, sidebar_width, float(min_altitude), float(max_altitude))
         erosion_params = gen_erosion_panel(CHN)
+        intpl_func = gen_spline_panel(CHN, sidebar_width, float(min_altitude), float(max_altitude))
         st.sidebar.button("Submit" if not CHN else "提交", on_click=onclick_submit)
         params = {
             'seed': seed,
             'noise_weight': noise_weight,
             'min_altitude': min_altitude,
             'max_altitude': max_altitude,
-            'intpl_func': intpl_func,
             'erosion_params': erosion_params,
         }
-    return CHN, params
+    return CHN, params, intpl_func
 
 
 
-def gen_main_content(CHN, params, main_width):
-    def click_submit(progressing_text, progressed_text):
-        st.session_state.output_terrain = process_terrain(CHN, params, 
-                                                          input_terrain = st.session_state.input_terrain, 
-                                                          progressing_text = progressing_text, 
-                                                          progressed_text = progressed_text)
+def gen_main_content(CHN, params, intpl_func, main_width):
+    def click_submit(input_terrain, progressing_text, progressed_text):
+        def check_rerun():
+            if params != st.session_state.params:
+                return True
+            if not np.array_equal(input_terrain, st.session_state.input_terrain):
+                return True
+            if st.session_state.first_run:
+                return True
+            return False
+        if check_rerun():
+            st.session_state.params = params
+            st.session_state.input_terrain = input_terrain
+            st.session_state.erode_terrain = process_terrain(CHN, params, 
+                                                            input_terrain = st.session_state.input_terrain, 
+                                                            progressing_text = progressing_text, 
+                                                            progressed_text = progressed_text)
+        st.session_state.output_terrain = intpl_func(st.session_state.erode_terrain)
+
     # Main content
     st.title("Cities Skyline II Terrain Modifier" if not CHN else "城市天际线2：地形生成器")
     uploaded_file = st.file_uploader("Upload terrain height map (PNG)." if not CHN else "上传初始地形图（PNG）", type= ['png'] )
@@ -201,11 +239,12 @@ def gen_main_content(CHN, params, main_width):
             # Get actual image file
             bytes_data = get_image_path(uploaded_file)
             input_terrain = cv2.resize(cv2.imread(bytes_data, cv2.IMREAD_ANYDEPTH), (4096, 4096))
-            st.session_state.input_terrain = input_terrain/65536*4000
-
-        if st.session_state.input_terrain is not None:
-            click_submit(progressing_text, progressed_text)
-            st.session_state.submitted = False
+            input_terrain = input_terrain/65536*4000
+        else: 
+            input_terrain = np.ones(shape=(4096, 4096))*12.5/100*4000
+    
+        click_submit(input_terrain, progressing_text, progressed_text)
+        st.session_state.submitted = False
 
     if st.session_state.input_terrain is not None:
         input_plot_terrain = cv2.resize(st.session_state.input_terrain, (512, 512))
@@ -267,16 +306,14 @@ def main():
     st.set_page_config(layout="wide")
     main_width = st_dimensions(key="main") 
     main_width = main_width['width'] if main_width is not None else 1400
-    CHN, params = gen_sidebar()
-    gen_main_content(CHN, params, main_width)
+    CHN, params, intpl_func = gen_sidebar()
+    gen_main_content(CHN, params, intpl_func, main_width)
     st.divider()
     footer = '''
     The square surrounded by the dashed lines in the middle of output preview denotes the constructable area of the game. 
 
     Be Careful! World map and terrain height map are different! The world map denotes the map surrounding the constructable area. You CANNOT build on the world map.
     Terrain height map denotes the map for the constructable area, which is the main area for you to construct your city. Both maps are required to be downloaded and loaded correctly into the game for the best terrain performance. 
-
-    For best performance, set resize dimension to 512, set Reverse Kernel Size to 32, and turn on the rain erosion.
 
     Developed by Zhenning Zhao. Contact the Author at [znzhaopersonal@gmail.com](mailto://znzhaopersonal@gmail.com). See tech document [here](https://github.com/znzhao/CS2Terrain).
     ''' if not CHN else '''

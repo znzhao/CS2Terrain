@@ -92,10 +92,8 @@ def process_terrain(CHN, params, input_terrain, progressing_text, progressed_tex
     # apply the noise on the map
     terrain = (1-params['noise_weight'])*input_terrain + params['noise_weight']*noise_terrain
     terrain = normalize(terrain, bounds)
-    terrain = params['intpl_func'](terrain)
     # erode the terrain
     if params['erosion_params']['erosion']:
         terrain = erode(terrain, params['erosion_params'], bounds, progressing_text, progressed_text)
     terrain = cv2.resize(terrain, (4096, 4096), interpolation=cv2.INTER_AREA)
-    terrain = params['intpl_func'](terrain)
     return terrain
