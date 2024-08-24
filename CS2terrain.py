@@ -14,8 +14,14 @@ from streamlit_dimensions import st_dimensions
 from scipy.interpolate import PchipInterpolator
 from algorithm import process_terrain
 from rivers import add_rivers_to_terrain
+from presets import preset_linear, preset_plain, preset_canyon, preset_plateau, preset_riverbend, preset_reverse
 from utils import remove_duplicates, get_image_path, color_continuous_scale
 
+if 'CHN' not in st.session_state:
+    st.session_state.CHN = False
+
+if 'show_warning' not in st.session_state:
+    st.session_state.show_warning = True
 
 if 'intpl_val_out_num' not in st.session_state:
         st.session_state.intpl_val_out_num = 0
@@ -29,6 +35,9 @@ if 'first_run' not in st.session_state:
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 
+if 'rerun' not in st.session_state:
+    st.session_state.rerun = False
+
 if 'input_terrain' not in st.session_state:
     st.session_state.input_terrain = np.ones(shape=(4096, 4096))*12.5/100*4000
 
@@ -41,9 +50,42 @@ if 'output_terrain' not in st.session_state:
 if 'params' not in st.session_state:
     st.session_state.params = None
 
+def show_warning(CHN):
+    warning_title = 'Notice' if not CHN else '注意事项'
+    warning_text = '''
+    - The square surrounded by the dashed lines in the middle of output preview denotes the constructable area of the game. 
+    - `terrain.png` is the map for the constructable area, while `world map.png` is the map surrounding the constructable area.
+    - Download both `terrain.png` and `world map.png`. Both maps are required to be downloaded and loaded correctly into the game.
+    - Put both files under `C:\\Users\\%username\\AppData\\LocalLow\\Colossal Order\\Cities Skylines II\\Heightmaps`, 
+      where `%username` is the username of your own computer.
+    - For best terrain performance, please turn on the rain erosion.
+    
+    ---
+    This website is open-source and free to use. Please note that technical support is not guaranteed. Use at your own risk.
+    
+    See tech document [here](https://github.com/znzhao/CS2Terrain).
+    ''' if not CHN else '''
+    - 输出预览中心被虚线包围的方形区域代表游戏中的可建造范围。
+    - 世界地图指的是游戏中作为背景的不可建造区域。地形高度图指的是游戏中的可建造范围。两者必须同时下载并正确导入游戏才可以正常显示地图。
+    - 下载后将两张png灰度图放入以下文件夹：`C:\\Users\\%username\\AppData\\LocalLow\\Colossal Order\\Cities Skylines II\\Heightmaps`
+      其中`%username`是个人电脑的用户名。
+    - 为保证最佳画面表现力，请打开雨水侵蚀功能。
+
+    ---
+    本地形编辑器由作者调用开源代码制作，无偿提供，不对有效性及后续技术支持提供保证，请谨慎使用。
+
+    B站主页：[@红色的青蛙](https://space.bilibili.com/124723924?spm_id_from=333.788.0.0)
+    详细技术文档请查阅[此文件](https://github.com/znzhao/CS2Terrain)。
+    '''
+    @st.dialog(warning_title)
+    def warning(warning_text):
+        st.markdown(warning_text)
+    warning(warning_text)
+
 def gen_basic_panel(CHN):
     basic_panel = st.expander("Basics" if not CHN else "基础参数")
     with basic_panel:
+        uploaded_file = st.file_uploader("Upload terrain height map (PNG)." if not CHN else "上传初始地形图（PNG）", type= ['png'] )
         seed = st.number_input('Random Seed' if not CHN else "随机种子", value = 127, 
                                help='Seed for generating the noise terrain.' if not CHN else "用于生成随机地形的随机种子。")
         noise_weight = st.slider('Noise Weight' if not CHN else "噪声权重", min_value = 0.0, max_value = 1.0, value=0.5,
@@ -53,10 +95,11 @@ def gen_basic_panel(CHN):
                                                 0, 4000, (0, 1800), step = 1, 
                                                 help='The altitude range for the output terrain. As a reference, the default plain height is 500 meters.'
                                                 if not CHN else "输出地图的海拔范围。作为参考，游戏地形编辑器中的默认海平面高度为500米。")
-    return seed, noise_weight, min_altitude, max_altitude
+    return seed, noise_weight, min_altitude, max_altitude, uploaded_file
+
 
 def gen_erosion_panel(CHN):
-    erosion_panel = st.sidebar.expander("Erosion Parameters" if not CHN else "侵蚀参数")
+    erosion_panel = st.expander("Erosion Parameters" if not CHN else "侵蚀参数")
     with erosion_panel:
         if not CHN:
             st.info('Turning on the rain erosion will result in better performance, but it will significantly affect the generation speed.')
@@ -69,7 +112,7 @@ def gen_erosion_panel(CHN):
                                     help='Higher rain rate will result in more erosion.' if not CHN else 
                                     '降雨量越大，侵蚀效果越强。')/10000.0
         evaporation_rate = st.number_input('Evaporation Rate (1/10000)' if not CHN else "蒸发速率（万分之一）",
-                                           value=5.0, min_value=0.0, disabled=not erosion, step = 1.0,
+                                           value=10.0, min_value=0.0, disabled=not erosion, step = 1.0,
                                            help='Higher evaporation rate will result in less erosion.' if not CHN else 
                                            '蒸发速率越大，侵蚀效果越弱。')/10000.0
         min_height_delta = st.number_input('Min Height Delta' if not CHN else "最小高度差",
@@ -81,7 +124,7 @@ def gen_erosion_panel(CHN):
                                        help='Repose slope is the angle such that the sand or rock can be piled into hills.' if not CHN else 
                                        '安息角坡度体现了材料性质，决定了不会发生滑坡现象的最大角度。')
         gravity = st.number_input('Gravity' if not CHN else "重力", 
-                                  value=30.0, min_value=0.0, step = 1.0, disabled=not erosion,
+                                  value=10.0, min_value=0.0, step = 1.0, disabled=not erosion,
                                   help='Higher gravity will result in faster rain dropping.' if not CHN else 
                                        '重力越大，雨水的下落速度也会越大。')
         sediment_capacity = st.number_input('Sediment Capacity' if not CHN else "沉积物容量", 
@@ -89,7 +132,7 @@ def gen_erosion_panel(CHN):
                                             help='Higher sediment capacity allows the rain water to carry more sands and rocks.' if not CHN else 
                                             '沉积物容量代表每单位雨水中允许携带的被溶解物的含量上限。')
         dissolving_rate = st.number_input('Dissolving Rate (%)' if not CHN else "溶解速率 (%)", 
-                                            value=25.0, min_value=0.0, disabled=not erosion,
+                                            value=15.0, min_value=0.0, disabled=not erosion,
                                             help='Higher dissolving rate will dissolve the terrain faster.' if not CHN else 
                                             '溶解速率越大，雨水对地形的侵蚀效果越明显。')/100
         deposition_rate = st.number_input('Deposition Rate (%)' if not CHN else "沉降速率 (%)", 
@@ -109,7 +152,7 @@ def gen_erosion_panel(CHN):
         }
         return erosion_params
 
-def gen_spline_panel(CHN, sidebar_width, min_altitude, max_altitude):
+def gen_spline_panel_erosion(CHN, sidebar_width, min_altitude, max_altitude):
     def increment_counter():
         st.session_state.intpl_val_out_num += 1
     def decrement_counter():
@@ -118,61 +161,45 @@ def gen_spline_panel(CHN, sidebar_width, min_altitude, max_altitude):
         else:
             st.session_state.intpl_val_out_num = 0
     
-    spline_panel = st.expander("Spline Curve" if not CHN else "样条曲线")
+    spline_panel = st.expander("Spline Curve" if not CHN else "重采样曲线")
     with spline_panel:
         if not CHN:
             st.info('By changing the x percentage of the terrain height into the pecent of y, the spline function will change the flatness of the map')
         else:
-            st.info('通过将输入高度转换为输出高度，样条曲线将会改变输出地图的平坦度。')
+            st.info('通过将输入高度转换为输出高度，重采样曲线将会改变输出地图的平坦度。')
+        colx, coly = st.columns(2)        
+        options = ['Plain', 'Riverbend', 'Plateau', 'Canyon', 'Reverse', 'Linear(Customize)', ] if not CHN else ["平原曲线", "河畔曲线", "高原曲线", "峡谷曲线", "倒置曲线", "线性（自定义）"]
+        preset_id = options.index(st.selectbox('Preset' if not CHN else "加载预设", options = options, key = 'Post Preset'))   
         colx, coly = st.columns(2)
-        ocean_lower_x = colx.number_input('Ocean Lower Anchor (m)' if not CHN else "海洋下届锚点 (米)", 
-                                          value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
-        ocean_lower_y = coly.number_input('Ocean Lower Altitude (m)' if not CHN else "海洋下届输出 (米)", 
-                                          value=min_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        ocean_upper_x = colx.number_input('Ocean Upper Anchor (m)' if not CHN else "海洋上界锚点 (米)", 
-                                          value=300.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        ocean_upper_y = coly.number_input('Ocean Upper Altitude (m)' if not CHN else "海洋上界输出 (米)", 
-                                          value=300.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_lower_x = colx.number_input('Plain Lower Anchor (m)' if not CHN else "平原下界锚点 (米)", 
-                                          value=325.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_lower_y = coly.number_input('Plain Lower Altitude (m)' if not CHN else "平原下界输出 (米)", 
-                                          value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_x       = colx.number_input('Plain Anchor (m)' if not CHN else "平原锚点 (米)", 
-                                          value=525.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_y       = coly.number_input('Plain Altitude (m)' if not CHN else "平原输出 (米)", 
-                                          value=500.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_upper_x = colx.number_input('Plain Upper Anchor (m)' if not CHN else "平原上界锚点 (米)", 
-                                          value=800.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        plain_upper_y = coly.number_input('Plain Upper Altitude (m)' if not CHN else "平原上界输出 (米)", 
-                                          value=600.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        mount_lower_x = colx.number_input('Mount Lower Anchor (m)' if not CHN else "山脉下届锚点 (米)", 
-                                          value=1200.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        mount_lower_y = coly.number_input('Mount Lower Altitude (m)' if not CHN else "山脉下届输出 (米)", 
-                                          value=1000.0, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-        mount_upper_x = colx.number_input('Mount Upper Anchor (m)' if not CHN else "山脉上界锚点 (米)", 
-                                          value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0, disabled=True)
-        mount_upper_y = coly.number_input('Mount Upper Altitude (m)' if not CHN else "山脉上界输出 (米)", 
-                                          value=max_altitude, min_value=min_altitude, max_value=max_altitude, step = 1.0)
-
-        intpl_x = [ocean_lower_x, ocean_upper_x, plain_lower_x, plain_x, plain_upper_x, mount_lower_x, mount_upper_x]
-        intpl_y = [ocean_lower_y, ocean_upper_y, plain_lower_y, plain_y, plain_upper_y, mount_lower_y, mount_upper_y]
+        if preset_id == 0:
+            intpl_x, intpl_y = preset_plain(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+        if preset_id == 1:
+            intpl_x, intpl_y = preset_riverbend(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+        if preset_id == 2:
+            intpl_x, intpl_y = preset_plateau(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+        if preset_id == 3:
+            intpl_x, intpl_y = preset_canyon(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+        if preset_id == 4:
+            intpl_x, intpl_y = preset_reverse(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+        if preset_id == 5:
+            intpl_x, intpl_y = preset_linear(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
 
         if st.session_state.intpl_val_out_num > 0:
-            key_xs = [str("Additional Anchor "+str(i)) for i in range(st.session_state.intpl_val_out_num)]
-            key_ys = [str("Additional Altitude "+str(i)) for i in range(st.session_state.intpl_val_out_num)]
-            value_xs = [colx.number_input('Additional Anchor (m)' if not CHN else '额外锚点 (米)', value=0.0,
+            key_xs = [str("Additional Final Anchor "+str(i)) for i in range(st.session_state.intpl_val_out_num)]
+            key_ys = [str("Additional Final Altitude "+str(i)) for i in range(st.session_state.intpl_val_out_num)]
+            value_xs = [colx.number_input('Additional Anchor (m)' if not CHN else '额外最终锚点 (米)', value=0.0,
                                           min_value=0.0, max_value=4000.0, step = 1.0, key = key_xs[i]) for i in range(st.session_state.intpl_val_out_num)]
-            value_ys = [coly.number_input('Adjusted Altitude (m)' if not CHN else '输出高度 (米)', value=0.0,
+            value_ys = [coly.number_input('Adjusted Altitude (m)' if not CHN else '输出最终高度 (米)', value=0.0,
                                            min_value=0.0, max_value=4000.0, step = 1.0, key = key_ys[i]) for i in range(st.session_state.intpl_val_out_num)]
             intpl_x = intpl_x + [x for x in value_xs]
             intpl_y = intpl_y + [y for y in value_ys]
-        colx.button('Add Anchor' if not CHN else "增加锚点", on_click=increment_counter)
-        coly.button('Delete Anchor' if not CHN else "减少锚点", on_click=decrement_counter, disabled=st.session_state.intpl_val_out_num==0)
+        colx.button('Add Anchor' if not CHN else "增加锚点", on_click=increment_counter, use_container_width = True)
+        coly.button('Delete Anchor' if not CHN else "减少锚点", on_click=decrement_counter, disabled=st.session_state.intpl_val_out_num==0, use_container_width = True)
         intpl_y = [intpl_y[i] for i in sorted(range(len(intpl_x)), key=lambda x: intpl_x[x])]
         intpl_x = sorted(intpl_x)
         intpl_x, intpl_y = remove_duplicates(intpl_x, intpl_y)
         intpl_func = PchipInterpolator(intpl_x, intpl_y)
-        oneline = np.linspace(min_altitude, max_altitude, 50).tolist()
+        oneline = np.linspace(min_altitude, max_altitude, 100).tolist()
         curve = intpl_func(oneline)
         showdata = pd.DataFrame([curve]).T
         indname = 'Initial Height (m)' if not CHN else "初始高度 (米)"
@@ -185,28 +212,43 @@ def gen_spline_panel(CHN, sidebar_width, min_altitude, max_altitude):
         fig.layout.xaxis.fixedrange = True
         fig.layout.yaxis.fixedrange = True
         fig.update_layout(autosize=True, height = sidebar_width)
-        fig.update_layout(title={'text': 'Spline Curve' if not CHN else '样条曲线', 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'})
+        fig.update_layout(title={'text': 'Spline Curve' if not CHN else '重采样曲线', 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'})
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     return intpl_func
 
 def gen_river_panel(CHN):
     def increase_river_num():
         st.session_state.river_num += 1
+        st.session_state.rerun = True
     def decrease_river_num():
         if st.session_state.river_num > 0:
             st.session_state.river_num -= 1
         else:
             st.session_state.river_num = 0
+        st.session_state.rerun = True
+
     river_panel = st.expander("River Generation" if not CHN else "河流生成")
     with river_panel:
         river_params = None
         radius = st.number_input('Radius' if not CHN else "采样半径", value = 0.02, step = 0.01, max_value=0.2, min_value=0.01,
                     help='Radius of the Possion Disk Sampling.' if not CHN else "泊松盘采样半径。", disabled=st.session_state.river_num == 0)
+        
+        colx, coly = st.columns(2)
+        colx.button('Add River' if not CHN else "增加河流", on_click=increase_river_num, use_container_width = True)
+        coly.button('Delete River' if not CHN else "减少河流", on_click=decrease_river_num, disabled=st.session_state.river_num==0, use_container_width = True)
+        
         if st.session_state.river_num > 0:
             if not CHN:
-                river_labels = ["River " + str(i) for i in range(st.session_state.river_num)]
+                if st.session_state.river_num > 1:
+                    river_labels = ["River " + str(i) for i in range(st.session_state.river_num)] 
+                else:
+                    river_labels = ["River 0"]
             else:
-                river_labels = ["河流 " + str(i) for i in range(st.session_state.river_num)]
+                if st.session_state.river_num > 1:
+                    river_labels = ["河流 " + str(i) for i in range(st.session_state.river_num)]
+                else:
+                    river_labels = ["河流 0"]
+
             tabs = st.tabs(river_labels)
             key_seeds = [str("River Source Seed"+str(i)) for i in range(st.session_state.river_num)]
             key_source_xs = [str("River Source x"+str(i)) for i in range(st.session_state.river_num)]
@@ -288,34 +330,45 @@ def gen_river_panel(CHN):
                 'river_widths': river_widths,
                 'river_depths': river_deepths,
                 }
-        colx, coly = st.columns(2)
-        colx.button('Add River' if not CHN else "增加河流", on_click=increase_river_num)
-        coly.button('Delete River' if not CHN else "减少河流", on_click=decrease_river_num, disabled=st.session_state.river_num==0)
         return river_params
 
-def gen_sidebar():
+@st.fragment
+def fragmented_sidebar():
     def onclick_submit():
         st.session_state.submitted = True
-    with st.sidebar:
-        CHN = st.sidebar.toggle('CHN/中文', value = False)
-        st.header("Terrain Setting Parameters" if not CHN else "参数设置")
-        sidebar_width = st_dimensions(key="sidebar")
-        sidebar_width = sidebar_width['width'] if sidebar_width is not None else 700
-        seed, noise_weight, min_altitude, max_altitude = gen_basic_panel(CHN)
-        erosion_params = gen_erosion_panel(CHN)
-        intpl_func = gen_spline_panel(CHN, sidebar_width, float(min_altitude), float(max_altitude))
-        river_params = gen_river_panel(CHN)
-        st.sidebar.button("Submit" if not CHN else "提交", on_click=onclick_submit)
-        params = {
-            'seed': seed,
-            'noise_weight': noise_weight,
-            'min_altitude': min_altitude,
-            'max_altitude': max_altitude,
-            'erosion_params': erosion_params,
-        }
-    return CHN, params, intpl_func, river_params
+        st.session_state.rerun = True
+    def on_change():
+        st.session_state.show_warning = True
+        st.session_state.rerun = True
+        
+    CHN = st.toggle('ENG/中文', value = False, on_change = on_change)
+    st.session_state.CHN = CHN
+    st.header("Terrain Setting Parameters" if not CHN else "参数设置")
+    sidebar_width = st_dimensions(key="sidebar")
+    sidebar_width = sidebar_width['width'] if sidebar_width is not None else 700
+    seed, noise_weight, min_altitude, max_altitude, uploaded_file = gen_basic_panel(CHN)
+    erosion_params = gen_erosion_panel(CHN)
+    intpl_func_final = gen_spline_panel_erosion(CHN, sidebar_width, float(min_altitude), float(max_altitude))
+    river_params = gen_river_panel(CHN)
+    st.button("Submit" if not CHN else "提交", on_click=onclick_submit)
+    params = {
+        'seed': seed,
+        'noise_weight': noise_weight,
+        'min_altitude': min_altitude,
+        'max_altitude': max_altitude,
+        'erosion_params': erosion_params,
+    }
+    if st.session_state.rerun:
+        st.session_state.rerun = False
+        st.rerun()
+    return CHN, params, intpl_func_final, river_params, uploaded_file
 
-def gen_main_content(CHN, params, intpl_func, river_params, main_width):
+def gen_sidebar():
+    with st.sidebar:
+        CHN, params, intpl_func_final, river_params, uploaded_file = fragmented_sidebar()
+    return CHN, params, intpl_func_final, river_params, uploaded_file
+        
+def gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params, main_width):
     def click_submit(input_terrain, progressing_text, progressed_text):
         def check_rerun():
             if params != st.session_state.params:
@@ -328,21 +381,20 @@ def gen_main_content(CHN, params, intpl_func, river_params, main_width):
         if check_rerun():
             st.session_state.params = params
             st.session_state.input_terrain = input_terrain
-            st.session_state.erode_terrain = process_terrain(CHN, params, 
+            st.session_state.erode_terrain = process_terrain(CHN, params,
                                                             input_terrain = st.session_state.input_terrain, 
                                                             progressing_text = progressing_text, 
                                                             progressed_text = progressed_text)
         if river_params is None:
-            output_terrain_no_river = intpl_func(st.session_state.erode_terrain)
+            output_terrain_no_river = intpl_func_final(st.session_state.erode_terrain)
             st.session_state.output_terrain = output_terrain_no_river
         else:
-            output_terrain_no_river = intpl_func(st.session_state.erode_terrain)
+            output_terrain_no_river = intpl_func_final(st.session_state.erode_terrain)
             river_terrain = add_rivers_to_terrain(st.session_state.erode_terrain, params, river_params)
             st.session_state.output_terrain = np.clip(output_terrain_no_river - river_terrain, 0, 4000)
             
     # Main content
-    st.title("Cities Skyline II Terrain Modifier" if not CHN else "城市天际线2：地形生成器")
-    uploaded_file = st.file_uploader("Upload terrain height map (PNG)." if not CHN else "上传初始地形图（PNG）", type= ['png'] )
+    st.title("Cities Skyline II Terrain Modifier" if not CHN else "城市天际线2：地形美化工具")
     threeD = st.toggle('3D Plot' if not CHN else "展示3D视图", value = False)
     colm1, colm2 = st.columns(2)
     progressing_text = 'Erosion in progress. Please wait.' if not CHN else '侵蚀模型处理中，请稍后...'
@@ -415,37 +467,15 @@ def gen_main_content(CHN, params, intpl_func, river_params, main_width):
                              data = file, file_name='Terrain.png', mime="image/png",
                              type = 'primary', use_container_width = True)
 
-
 def main():
     st.set_page_config(layout="wide")
-    main_width = st_dimensions(key="main") 
+    main_width = st_dimensions(key="main")
     main_width = main_width['width'] if main_width is not None else 1400
-    CHN, params, intpl_func, river_params = gen_sidebar()
-    gen_main_content(CHN, params, intpl_func, river_params, main_width)
-    st.divider()
-    footer = '''
-    The square surrounded by the dashed lines in the middle of output preview denotes the constructable area of the game. 
-
-    Be Careful! World map and terrain height map are different! The world map denotes the map surrounding the constructable area. You CANNOT build on the world map.
-    Terrain height map denotes the map for the constructable area, which is the main area for you to construct your city. Both maps are required to be downloaded and loaded correctly into the game for the best terrain performance. 
-
-    Developed by Zhenning Zhao. Contact the Author at [znzhaopersonal@gmail.com](mailto://znzhaopersonal@gmail.com). See tech document [here](https://github.com/znzhao/CS2Terrain).
-    ''' if not CHN else '''
-    输出预览中心被虚线包围的方形区域代表游戏中的可建造范围。
-
-    请注意：世界地图指的是游戏中作为背景的不可建造区域。地形高度图指的是游戏中的可建造范围。两者必须同时下载并正确导入游戏才可以正常显示地图。
-
-    为保证最佳画面表现力，请打开雨水侵蚀功能。
-
-    本地形编辑器由作者调用开源代码制作，无偿提供，不对有效性及后续技术支持提供保证，请谨慎使用。
-
-    [点此处](mailto://znzhaopersonal@gmail.com)联系开发者。B站主页：[@红色的青蛙](https://space.bilibili.com/124723924?spm_id_from=333.788.0.0)
-
-    详细技术文档请查阅[此文件](https://github.com/znzhao/CS2Terrain)。
-    '''
-    st.markdown(footer,unsafe_allow_html=True)
-
-
+    CHN, params, intpl_func_final, river_params, uploaded_file = gen_sidebar()
+    gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params, main_width)
+    if st.session_state.show_warning:
+        show_warning(st.session_state.CHN)
+        st.session_state.show_warning = False
     
 if __name__ == '__main__':
     main()

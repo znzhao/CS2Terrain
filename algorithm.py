@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 import streamlit as st
 import numpy as np
+from scipy.interpolate import PchipInterpolator
 from utils import normalize, fbm, simple_gradient, gaussian_blur, sample, displace
 
 def apply_slippage(terrain, repose_slope, cell_width):
@@ -92,6 +93,7 @@ def process_terrain(CHN, params, input_terrain, progressing_text, progressed_tex
     # apply the noise on the map
     terrain = (1-params['noise_weight'])*input_terrain + params['noise_weight']*noise_terrain
     terrain = normalize(terrain, bounds)
+    print('intpl')
     # erode the terrain
     if params['erosion_params']['erosion']:
         terrain = erode(terrain, params['erosion_params'], bounds, progressing_text, progressed_text)
