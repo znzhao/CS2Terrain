@@ -57,29 +57,38 @@ The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Str
     - This parameter toggles the application of rain erosion on the terrain. When enabled, rain erosion will be applied to the terrain, modifying its features over time.
     - 此参数切换是否在地形上应用雨水侵蚀。当启用时，将对地形应用雨水侵蚀，随着时间的推移修改其特征。
 
-2. **Full Width 降雨范围:**
-    - This parameter defines the range over which rain erosion will occur. Increasing it will extend the area affected by rain erosion.
-    - 此参数定义雨水侵蚀发生的范围。增加它将扩大受雨水侵蚀影响的区域。
-
-3. **Rain Rate (1/10,000) 降雨量（万分之一）:**
+2. **Rain Rate (1/10,000) 降雨量（万分之一）:**
     - This parameter controls the rate of rainfall used in the erosion simulation. Increasing it will result in more erosion over time.
     - 此参数控制侵蚀模拟中使用的降雨量。随着时间的推移，增加它将导致更多的侵蚀。
 
-4. **Evaporation Rate (1/10,000) 蒸发速率（万分之一）:**
+3. **Evaporation Rate (1/10,000) 蒸发速率（万分之一）:**
     - This parameter controls the rate of evaporation of water in the erosion simulation. Increasing it will cause water to evaporate more quickly, affecting the erosion process.
     - 此参数控制侵蚀模拟中水的蒸发速率。增加它将导致水更快地蒸发，从而影响侵蚀过程。
 
-5. **Min Height Delta 最小高度差:**
+4. **Min Height Delta 最小高度差:**
     - This parameter defines the minimum height difference required for erosion to occur. Increasing it will require larger height differences for erosion to take place.
     - 此参数定义了侵蚀发生所需的最小高度差。增加它将需要更大的高度差才能发生侵蚀。
 
-6. **Repose Slope 休止坡度:**
+5. **Repose Slope 休止坡度:**
     - This parameter controls the slope at which sediment is deposited during erosion. Increasing it will result in sediment being deposited at steeper slopes.
     - 此参数控制侵蚀过程中沉积物沉积的坡度。增加它将导致沉积物沉积在更陡峭的坡度上。
 
-7. **Gravity 重力:**
+6. **Gravity 重力:**
     - This parameter controls the strength of gravity in the erosion simulation. Increasing it will result in more pronounced effects of gravity on the erosion process.
-    - 此参数控制侵蚀模拟中重力的强度。增加它将导致重力对侵
+    - 此参数控制侵蚀模拟中重力的强度。增加它将导致重力对侵。
+   
+7. **Sediment Capacity 沉积物容量:**
+    - Higher sediment capacity allows the rain water to carry more sands and rocks.
+    - 沉积物容量代表每单位雨水中允许携带的被溶解物的含量上限。
+   
+8. **Dissolving Rate (%) 溶解速率 (%):**
+    - Higher dissolving rate will dissolve the terrain faster.
+    - 溶解速率越大，雨水对地形的侵蚀效果越明显。
+      
+9. **Deposition Rate (%) 沉降速率 (%):**
+    - Higher deposition rate will make the terrain flatter.
+    - 沉降速率越大，沙石沉降速度越快，地形越平缓。
+   
 
 ### Spline Curve 重采样曲线
 This panel gets the anchored points for interpolating a resampling curve, which transfrom the terrain according to the curve. The website includes several predetermined curves that behave well, but you can always change the details of each curve by yourself.
