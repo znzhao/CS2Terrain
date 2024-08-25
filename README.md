@@ -1,11 +1,12 @@
 ![image](https://github.com/znzhao/CS2Terrain/blob/main/fig/plain.png?raw=true)
-# Terrain Modifier for Cities Skyline II / 城市天际线II地形美化工具
+# Terrain Modifier for Cities Skyline II
+# 城市天际线II地形美化工具
 
 The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Streamlit, designed to enhance and adjust terrain heightmaps for use in the game "Cities Skyline II". It provides users with a variety of parameters to tweak and apply different terrain characteristics such as noise adjustment, erosion effects, and custom terrain anchoring. The modified map with rain erosion applied will have exceptionally realistic terrain effects.
 
 城市天际线II地形修改器是一个基于Python的工具，旨在增强和调整由游戏《城市天际线II》生成的地形高程图。它为用户提供了各种参数，可以调整和应用不同的地形特征，如噪声调整、侵蚀效果和自定义地形锚定。施加了雨水侵袭过程的修改地图将会拥有极佳的真实地形效果。
 
-## Instructions / 使用方法
+## Instructions 使用方法
 
 1. Open CS2. Use the map editor to roughly adjust the terrain's height by raising or lowering it. Detailed terrain changes manually in-game are unnecessary. The algorithm will add details to the rough map later.
 
@@ -31,67 +32,67 @@ The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Str
 
    尽情建设您的城市吧！
 
-## Parameter Instruction / 参数控制
+## Parameter Instruction 参数控制
 
-### Basic / 基础噪声参数
-1. **Random Seed / 随机种子:**
+### Basic 基础噪声参数
+1. **Random Seed 随机种子:**
    - This parameter controls the random seed used for generating the terrain.
    - 此参数控制用于生成地形的随机种子。改变种子将会在地形中产生不同的随机模式。
 
-2. **Noise Terrain Weight / 噪声地形权重:**
+2. **Noise Terrain Weight 噪声地形权重:**
    - This parameter controls the weight of the noise terrain. A smaller value will give more influence to the noise terrain, resulting in terrain that resembles the initial state.
    - 此参数控制噪声地形的权重。较小的值将会赋予初始地形更大的影响力，导致地形更接近初始状态。
 
-3. **Output Height Range (meter) / 输出高度范围（米）:**
+3. **Output Height Range (meter) 输出高度范围（米）:**
    - This parameter defines the range of heights in the output terrain. Changing this range will affect the overall elevation of the terrain.
    - 此参数定义输出地形的高度范围。改变这个范围将影响地形的整体海拔高度。
 
 
-### Rain Erosion / 雨水侵蚀作用
+### Rain Erosion 雨水侵蚀作用
 
 **Attention! Applying rain erosion is essential for creating realistic terrain. However, it can significantly increase the algorithm's runtime. For optimal results, please proceed with applying rain erosion. Though it may take extra time, the outcome will be worth the wait.**
 
 **注意！ 应用雨蚀对于生成更逼真的地形至关重要。然而，这可能会显著延长算法的运行时间。为了获得最佳效果，请务必应用雨蚀。虽然这可能需要一些额外的等待时间，但最终的结果将是值得的。**
 
-1. **Apply Rain Erosion / 施加雨水侵蚀:**
+1. **Apply Rain Erosion 施加雨水侵蚀:**
     - This parameter toggles the application of rain erosion on the terrain. When enabled, rain erosion will be applied to the terrain, modifying its features over time.
     - 此参数切换是否在地形上应用雨水侵蚀。当启用时，将对地形应用雨水侵蚀，随着时间的推移修改其特征。
 
-2. **Full Width / 降雨范围:**
+2. **Full Width 降雨范围:**
     - This parameter defines the range over which rain erosion will occur. Increasing it will extend the area affected by rain erosion.
     - 此参数定义雨水侵蚀发生的范围。增加它将扩大受雨水侵蚀影响的区域。
 
-3. **Rain Rate (1/10000) / 降雨量（万分之一）:**
+3. **Rain Rate (1/10,000) 降雨量（万分之一）:**
     - This parameter controls the rate of rainfall used in the erosion simulation. Increasing it will result in more erosion over time.
     - 此参数控制侵蚀模拟中使用的降雨量。随着时间的推移，增加它将导致更多的侵蚀。
 
-4. **Evaporation Rate (1/10000) / 蒸发速率（万分之一）:**
+4. **Evaporation Rate (1/10,000) 蒸发速率（万分之一）:**
     - This parameter controls the rate of evaporation of water in the erosion simulation. Increasing it will cause water to evaporate more quickly, affecting the erosion process.
     - 此参数控制侵蚀模拟中水的蒸发速率。增加它将导致水更快地蒸发，从而影响侵蚀过程。
 
-5. **Min Height Delta / 最小高度差:**
+5. **Min Height Delta 最小高度差:**
     - This parameter defines the minimum height difference required for erosion to occur. Increasing it will require larger height differences for erosion to take place.
     - 此参数定义了侵蚀发生所需的最小高度差。增加它将需要更大的高度差才能发生侵蚀。
 
-6. **Repose Slope / 休止坡度:**
+6. **Repose Slope 休止坡度:**
     - This parameter controls the slope at which sediment is deposited during erosion. Increasing it will result in sediment being deposited at steeper slopes.
     - 此参数控制侵蚀过程中沉积物沉积的坡度。增加它将导致沉积物沉积在更陡峭的坡度上。
 
-7. **Gravity / 重力:**
+7. **Gravity 重力:**
     - This parameter controls the strength of gravity in the erosion simulation. Increasing it will result in more pronounced effects of gravity on the erosion process.
     - 此参数控制侵蚀模拟中重力的强度。增加它将导致重力对侵
 
-### Spline Curve / 重采样曲线
+### Spline Curve 重采样曲线
 This panel gets the anchored points for interpolating a resampling curve, which transfrom the terrain according to the curve. The website includes several predetermined curves that behave well, but you can always change the details of each curve by yourself.
 
 这个面板获取了用于插值重采样曲线的锚定点，该曲线将输入的高度转换成输出的高度。网页内置了一部分表现较好的重采样曲线函数。如果对最终地形不满意，则可以通过改变下方的锚定点坐标进行微调。
 
-### River Generation / 河流生成
+### River Generation 河流生成
 This panel controls river generation. This panel is in beta stage and will be changed in the future.
 
 这个面板获取了控制河流生成。该面板目前还在测试中，未来有计划对其中的功能进行修改。
 
-## Tech Details / 技术细节
+## Tech Details 技术细节
 
 This program modifies the height map generated from CS2 according to the following procedure:
 
@@ -125,7 +126,7 @@ This program modifies the height map generated from CS2 according to the followi
 
    将地图大小重新调整为 $4096 \times 4096$。对高度图应用另一个高斯模糊，以便为调整大小的地图进行精磨。
 
-## MIT License / 版权声明
+## MIT License 版权声明
 Copyright (c) 2024 Zhenning Zhao
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
