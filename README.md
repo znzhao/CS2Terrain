@@ -122,15 +122,17 @@ This program modifies the height map generated from CS2 according to the followi
 
    使用渐进插值来获得详细丰富度曲线。此函数将高度的百分比映射到要添加到此高度的详细丰富度。
 
-5. Combine the input height and the noise height according to the equation: $terrain height = weight_{original} \times input + weight_{noise} \times detail\ richness \times noise$
+5. Combine the input height and the noise height according to the equation:
+   $terrain height = weight_{original} \times input + weight_{noise} \times detail\ richness \times noise$
 
-   根据以下方程将输入高度和噪声高度组合起来：$地形高度 = 初始地形权重 \times 初始地形高度 + 细节地形权重 \times 该高程细节丰富度 \times 噪声细节$
+   根据以下方程将输入高度和噪声高度组合起来：
+   $地形高度 = 初始地形权重 \times 初始地形高度 + 细节地形权重 \times 该高程细节丰富度 \times 噪声细节$
 
-6. Apply rain erosion to the height map. The key algorithm comes from Daniel Andrino. Please refer to the [original repository](https://github.com/dandrino/terrain-erosion-3-ways?tab=MIT-1-ov-file) for more details.
+7. Apply rain erosion to the height map. The key algorithm comes from Daniel Andrino. Please refer to the [original repository](https://github.com/dandrino/terrain-erosion-3-ways?tab=MIT-1-ov-file) for more details.
 
    对高度图应用雨水侵蚀。关键算法来自Daniel Andrino。请参阅原始文档以获取更多详细信息。
 
-7. Resize the map to $4096 \times 4096$. Apply another Gaussian blur to the height map to refine the map for resizing.
+8. Resize the map to $4096 \times 4096$. Apply another Gaussian blur to the height map to refine the map for resizing.
 
    将地图大小重新调整为 $4096 \times 4096$。对高度图应用另一个高斯模糊，以便为调整大小的地图进行精磨。
 
