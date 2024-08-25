@@ -63,7 +63,7 @@ def show_warning(CHN):
     ---
     This website is open-source and free to use. Please note that technical support is not guaranteed. Use at your own risk.
     
-    See tech document [here](https://github.com/znzhao/CS2Terrain).
+    See tech document [here](https://github.com/znzhao/CS2Terrain/blob/main/README.md).
     ''' if not CHN else '''
     - 输出预览中心被虚线包围的区域代表游戏中的可建造范围。
     - 世界地图指的是游戏中作为背景的不可建造区域。地形高度图指的是游戏中的可建造范围。两者必须同时下载并正确导入游戏才可以正常显示地图。
@@ -75,7 +75,7 @@ def show_warning(CHN):
     本地形编辑器由作者调用开源代码制作，无偿提供，不对有效性及后续技术支持提供保证，请谨慎使用。
 
     B站主页：[@红色的青蛙](https://space.bilibili.com/124723924?spm_id_from=333.788.0.0)
-    详细技术文档请查阅[此文件](https://github.com/znzhao/CS2Terrain)。
+    详细技术文档请查阅[此文件](https://github.com/znzhao/CS2Terrain/blob/main/README.md)。
     '''
     @st.dialog(warning_title)
     def warning(warning_text):
