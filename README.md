@@ -1,6 +1,5 @@
 ![image](https://github.com/znzhao/CS2Terrain/blob/main/fig/plain.png?raw=true)
-# Terrain Modifier for Cities Skyline II
-# 城市天际线II地形美化工具
+# Terrain Modifier for Cities Skyline II 城市天际线II地形美化工具
 
 The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Streamlit, designed to enhance and adjust terrain heightmaps for use in the game "Cities Skyline II". It provides users with a variety of parameters to tweak and apply different terrain characteristics such as noise adjustment, erosion effects, and custom terrain anchoring. The modified map with rain erosion applied will have exceptionally realistic terrain effects.
 
