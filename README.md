@@ -19,13 +19,13 @@ The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Str
 
    打开城市天际线II地形修改器。上传刚刚导出的地形修改器。
 
-4. Customize the parameters. For optimal in-game terrain performance, enable rain erosion with a resize dimension $\leq$ 512. When you find the output terrain meets your requirements, export the output height map to the same folder.
+4. Customize the parameters. For optimal in-game terrain performance, enable rain erosion. When you find the output terrain meets your requirements, export the output height map to the same folder.
 
-   自定义调整参数。为了获得最佳的游戏地形性能，请将雨水侵蚀功能打开，并将缩放尺寸设为 $\leq$ 512。当您发现输出地形满足您的要求时，将输出高度图导出到同一文件夹。
+   自定义调整参数。为了获得最佳的游戏地形性能，请打开雨水侵蚀功能。当您发现输出地形满足您的要求时，将输出高度图导出到同一文件夹。
 
-5. Restart the game and enter the map editor. Import the exported height map in-game. Use the in-game blur brush to gently blur the entire map. This should give you a randomly generated unique map with vivid mountains.
+5. Restart the game and enter the map editor. Import the exported height map in-game. This should give you a randomly generated unique map with vivid mountains.
 
-   重新启动游戏并进入地图编辑器。在游戏中导入导出的高度图。使用游戏内的模糊画笔轻轻涂抹整个地图。这样应该会给您一个独一无二的拥有壮丽山脉的随机生成地图。
+   重新启动游戏并进入地图编辑器。在游戏中导入导出的高度图。这样应该会给您一个独一无二的拥有壮丽山脉的随机生成地图。
 
 6. Build your city as you wish. Enjoy!
 
@@ -38,44 +38,20 @@ The Terrain Modifier for Cities Skyline 2 (CS2) is a Python-based tool using Str
    - This parameter controls the random seed used for generating the terrain.
    - 此参数控制用于生成地形的随机种子。改变种子将会在地形中产生不同的随机模式。
 
-2. **Signal Average Kernel Size / 信号平滑卷积核:**
-   - This parameter determines the size of the kernel used for averaging input terrain. Increasing the kernel size will result in a smoother terrain, while decreasing it will retain more input detail.
-   - 此参数确定用于平滑输入地形的卷积核的大小。增加卷积核大小将会产生更平滑的地形，而减小大小将会保留更多输入细节，但可能引入噪音。
+2. **Noise Terrain Weight / 噪声地形权重:**
+   - This parameter controls the weight of the noise terrain. A smaller value will give more influence to the noise terrain, resulting in terrain that resembles the initial state.
+   - 此参数控制噪声地形的权重。较小的值将会赋予初始地形更大的影响力，导致地形更接近初始状态。
 
-3. **Initial Terrain Weight / 初始地形权重:**
-   - This parameter controls the weight of the initial terrain. A larger value will give more influence to the initial terrain, resulting in terrain that resembles the initial state more closely.
-   - 此参数控制初始地形的权重。较大的值将会赋予初始地形更大的影响力，导致地形更接近初始状态。
-
-4. **Noise Terrain Weight / 噪声地形权重:**
-   - This parameter controls the weight of the noise in the terrain. Increasing the value will amplify the influence of noise, leading to a more rugged terrain
-   - 此参数控制地形中噪声的权重。增加该值将放大噪声的影响，导致地形更加崎岖，而减小它将导致地形更加平滑。
-
-5. **Resize Dimension / 缩放精度:**
-   - This parameter determines the dimensions to which the terrain is resized. A larger dimension will result in higher resolution but may slow down processing speed.
-   - 此参数确定地形调整到的尺寸。较大的尺寸将会产生更高的分辨率，但可能会降低处理速度。
-
-6. **Reverse Kernel Size / 复原平滑卷积核:**
-   - This parameter determines the size of the kernel used for reverse smoothing. Increasing the kernel size will result in a smoother terrain after erosion.
-   - 此参数确定用于反向平滑的卷积核的大小。增加卷积核大小将导致侵蚀后的地形更加平滑。
-
-7. **Output Height Range (meter) / 输出高度范围（米）:**
+3. **Output Height Range (meter) / 输出高度范围（米）:**
    - This parameter defines the range of heights in the output terrain. Changing this range will affect the overall elevation of the terrain.
    - 此参数定义输出地形的高度范围。改变这个范围将影响地形的整体海拔高度。
 
-### Detail Richness / 细节丰富度
-This panel gets the anchored points for interpolating a detail richness curve, which defines the degree of detail richness according to the altitude of the input height. The curve contains at least 3 given anchors (ocean, plain, and mountain) and optional outside anchors.
-
-这个板块获取了用于插值细节丰富度曲线的锚定点，该曲线根据输入高度的海拔定义了细节丰富度的程度。该曲线至少包含3个给定的锚定点（海洋、平原和山脉），以及可选的外部锚定点。
-
-The ocean and mountain anchor is fixed at 0% and 100% of the possible height allowed by CS2 (0, 65536). The default plain altitude is at 12.5%, which is the initial height given by CS2 in-game terrain editor, however the player can change the place of the plain anchor.
-
-海洋和山脉的锚定点固定在 CS2 允许的可能高度范围（0到65536）的 0% 和 100% 处。默认的平原海拔高度为 12.5%，这是 CS2 游戏地形编辑器中给出的初始高度，然而玩家可以自行改变平原锚点的位置。
 
 ### Rain Erosion / 雨水侵蚀作用
 
-**Attension! Applying rain erosion is crucial to generating more realistic terrain. However, applying rain erosion could significantly affect the amount of time for the algorithm to run. For best performance, turn on the erosion with resize dimension smaller than or equal to 512, but turn it off for larger dimensions.**
+**Attention! Applying rain erosion is essential for creating realistic terrain. However, it can significantly increase the algorithm's runtime. For optimal results, please proceed with applying rain erosion. Though it may take extra time, the outcome will be worth the wait.**
 
-**注意！施加雨水侵蚀对生成更逼真的地形至关重要。然而，施加雨水侵蚀可能会显著影响算法的运行时间。为了获得最佳性能，在缩放精度小于或等于512的情况下打开侵蚀，但对于更大的尺寸则应选择关闭。**
+**注意！ 应用雨蚀对于生成更逼真的地形至关重要。然而，这可能会显著延长算法的运行时间。为了获得最佳效果，请务必应用雨蚀。虽然这可能需要一些额外的等待时间，但最终的结果将是值得的。**
 
 1. **Apply Rain Erosion / 施加雨水侵蚀:**
     - This parameter toggles the application of rain erosion on the terrain. When enabled, rain erosion will be applied to the terrain, modifying its features over time.
@@ -104,6 +80,16 @@ The ocean and mountain anchor is fixed at 0% and 100% of the possible height all
 7. **Gravity / 重力:**
     - This parameter controls the strength of gravity in the erosion simulation. Increasing it will result in more pronounced effects of gravity on the erosion process.
     - 此参数控制侵蚀模拟中重力的强度。增加它将导致重力对侵
+
+### Spline Curve / 重采样曲线
+This panel gets the anchored points for interpolating a resampling curve, which transfrom the terrain according to the curve. The website includes several predetermined curves that behave well, but you can always change the details of each curve by yourself.
+
+这个面板获取了用于插值重采样曲线的锚定点，该曲线将输入的高度转换成输出的高度。网页内置了一部分表现较好的重采样曲线函数。如果对最终地形不满意，则可以通过改变下方的锚定点坐标进行微调。
+
+### River Generation / 河流生成
+This panel controls river generation. This panel is in beta stage and will be changed in the future.
+
+这个面板获取了控制河流生成。该面板目前还在测试中，未来有计划对其中的功能进行修改。
 
 ## Tech Details / 技术细节
 
