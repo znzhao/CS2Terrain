@@ -65,7 +65,7 @@ def show_warning(CHN):
     
     See tech document [here](https://github.com/znzhao/CS2Terrain).
     ''' if not CHN else '''
-    - 输出预览中心被虚线包围的方形区域代表游戏中的可建造范围。
+    - 输出预览中心被虚线包围的区域代表游戏中的可建造范围。
     - 世界地图指的是游戏中作为背景的不可建造区域。地形高度图指的是游戏中的可建造范围。两者必须同时下载并正确导入游戏才可以正常显示地图。
     - 下载后将两张png灰度图放入以下文件夹：`C:\\Users\\%username\\AppData\\LocalLow\\Colossal Order\\Cities Skylines II\\Heightmaps`
       其中`%username`是个人电脑的用户名。
