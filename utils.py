@@ -1,12 +1,21 @@
 import os
 import numpy as np
+from collections import Counter
 
 color_continuous_scale=[(0,'rgb(23, 23, 121)'), 
                         (0.25, 'rgb(0, 166, 80)'), 
                         (0.5,'rgb(216, 218, 120)'), 
                         (0.75,'rgb(98, 64, 57)'), 
                         (1,'rgb(255, 255, 255)')]
-
+def get_color_scale(min_level, max_level, sealevel = 500):
+    diff = max_level - min_level
+    color_continuous_scale=[[0,'rgb(23, 23, 121)'], 
+                            [sealevel / diff * 1/3, 'rgb(135, 206, 235)'], 
+                            [sealevel / diff * 2/3, 'rgb(0, 166, 80)'], 
+                            [sealevel / diff + 1/3*(1-sealevel / diff),'rgb(216, 218, 120)'], 
+                            [sealevel / diff + 2/3*(1-sealevel / diff),'rgb(98, 64, 57)'], 
+                            [1,'rgb(255, 255, 255)']]
+    return color_continuous_scale
 # Renormalizes the values of `x` to `bounds`
 def normalize(x, bounds=(0, 1)):
     return np.interp(x, (x.min(), x.max()), bounds)
@@ -94,3 +103,16 @@ def get_image_path(img):
     with open(file_path, "wb") as img_file:
         img_file.write(img.getbuffer())
     return file_path
+
+
+def find_duplicates_sorted(lst):
+    counter = Counter(lst)
+    duplicates = sorted([item for item, count in counter.items() if count > 1])
+    return duplicates
+
+def sigmoid(arr, steepness=10, midpoint=0.5):
+    return 1 / (1 + np.exp(-steepness * (arr - midpoint)))
+
+from matplotlib import pyplot
+pyplot.plot(np.linspace(0, 1, 100), sigmoid(np.linspace(0,1,100),10, 0.3))
+pyplot.show()

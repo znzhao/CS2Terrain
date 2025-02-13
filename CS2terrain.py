@@ -14,11 +14,11 @@ from streamlit_dimensions import st_dimensions
 from scipy.interpolate import PchipInterpolator
 from algorithm import process_terrain
 from rivers import add_rivers_to_terrain
-from presets import preset_linear, preset_plain, preset_canyon, preset_plateau, preset_riverbend, preset_reverse
-from utils import remove_duplicates, get_image_path, color_continuous_scale
+from presets import preset_linear, preset_plain, preset_canyon, preset_plateau, preset_ocean, preset_reverse
+from utils import remove_duplicates, get_image_path, get_color_scale
 
 if 'CHN' not in st.session_state:
-    st.session_state.CHN = False
+    st.session_state.CHN = True
 
 if 'show_warning' not in st.session_state:
     st.session_state.show_warning = True
@@ -40,6 +40,9 @@ if 'rerun' not in st.session_state:
 
 if 'input_terrain' not in st.session_state:
     st.session_state.input_terrain = np.ones(shape=(4096, 4096))*12.5/100*4000
+
+if 'input_display' not in st.session_state:
+    st.session_state.input_display = np.ones(shape=(4096, 4096))*12.5/100*4000
 
 if 'erode_terrain' not in st.session_state:
     st.session_state.erode_terrain = None
@@ -88,11 +91,11 @@ def gen_basic_panel(CHN):
         uploaded_file = st.file_uploader("Upload terrain height map (PNG)." if not CHN else "上传初始地形图（PNG）", type= ['png'] )
         seed = st.number_input('Random Seed' if not CHN else "随机种子", value = 127, 
                                help='Seed for generating the noise terrain.' if not CHN else "用于生成随机地形的随机种子。")
-        noise_weight = st.slider('Noise Weight' if not CHN else "噪声权重", min_value = 0.0, max_value = 1.0, value=0.5,
+        noise_weight = st.slider('Noise Weight' if not CHN else "噪声权重", min_value = 0.0, max_value = 1.0, value=0.2,
                                  help='Lower weight means the output terrain will look more like the input terrain, vice versa.'
                                  if not CHN else "权重越低输出地图越接近初始地图， 否则更接近随机地图。")
         min_altitude, max_altitude = st.slider('Output Height Range (meter)' if not CHN else "输出高度范围（米）",
-                                                0, 4000, (0, 1800), step = 1, 
+                                                0, 4000, (0, 3000), step = 1, 
                                                 help='The altitude range for the output terrain. As a reference, the default plain height is 500 meters.'
                                                 if not CHN else "输出地图的海拔范围。作为参考，游戏地形编辑器中的默认海平面高度为500米。")
     return seed, noise_weight, min_altitude, max_altitude, uploaded_file
@@ -167,14 +170,14 @@ def gen_spline_panel_erosion(CHN, sidebar_width, min_altitude, max_altitude):
             st.info('By changing the x percentage of the terrain height into the pecent of y, the spline function will change the flatness of the map')
         else:
             st.info('通过将输入高度转换为输出高度，重采样曲线将会改变输出地图的平坦度。')
-        colx, coly = st.columns(2)        
-        options = ['Plain', 'Riverbend', 'Plateau', 'Canyon', 'Reverse', 'Linear(Customize)', ] if not CHN else ["平原曲线", "河畔曲线", "高原曲线", "峡谷曲线", "倒置曲线", "线性（自定义）"]
+        colx, coly = st.columns(2)
+        options = ['Plain', 'Oceanside', 'Plateau', 'Canyon', 'Reverse', 'Linear(Customize)', ] if not CHN else ["平原曲线", "海畔曲线", "高原曲线", "峡谷曲线", "倒置曲线", "线性（自定义）"]
         preset_id = options.index(st.selectbox('Preset' if not CHN else "加载预设", options = options, key = 'Post Preset'))   
         colx, coly = st.columns(2)
         if preset_id == 0:
             intpl_x, intpl_y = preset_plain(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
         if preset_id == 1:
-            intpl_x, intpl_y = preset_riverbend(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
+            intpl_x, intpl_y = preset_ocean(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
         if preset_id == 2:
             intpl_x, intpl_y = preset_plateau(CHN, colx, coly, min_altitude, max_altitude, key = 'post')
         if preset_id == 3:
@@ -214,7 +217,7 @@ def gen_spline_panel_erosion(CHN, sidebar_width, min_altitude, max_altitude):
         fig.update_layout(autosize=True, height = sidebar_width)
         fig.update_layout(title={'text': 'Spline Curve' if not CHN else '重采样曲线', 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'})
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    return intpl_func
+    return intpl_func, intpl_x, intpl_y
 
 def gen_river_panel(CHN):
     def increase_river_num():
@@ -341,14 +344,14 @@ def fragmented_sidebar():
         st.session_state.show_warning = True
         st.session_state.rerun = True
         
-    CHN = st.toggle('ENG/中文', value = False, on_change = on_change)
+    CHN = st.toggle('ENG/中文', value = True, on_change = on_change)
     st.session_state.CHN = CHN
     st.header("Terrain Setting Parameters" if not CHN else "参数设置")
     sidebar_width = st_dimensions(key="sidebar")
     sidebar_width = sidebar_width['width'] if sidebar_width is not None else 700
     seed, noise_weight, min_altitude, max_altitude, uploaded_file = gen_basic_panel(CHN)
     erosion_params = gen_erosion_panel(CHN)
-    intpl_func_final = gen_spline_panel_erosion(CHN, sidebar_width, float(min_altitude), float(max_altitude))
+    intpl_func, intpl_x, intpl_y = gen_spline_panel_erosion(CHN, sidebar_width, float(min_altitude), float(max_altitude))
     river_params = gen_river_panel(CHN)
     st.button("Submit" if not CHN else "提交", on_click=onclick_submit)
     params = {
@@ -357,18 +360,20 @@ def fragmented_sidebar():
         'min_altitude': min_altitude,
         'max_altitude': max_altitude,
         'erosion_params': erosion_params,
+        'intpl_x': intpl_x,
+        'intpl_y': intpl_y,
     }
     if st.session_state.rerun:
         st.session_state.rerun = False
         st.rerun()
-    return CHN, params, intpl_func_final, river_params, uploaded_file
+    return CHN, params, intpl_x, intpl_y, river_params, uploaded_file
 
 def gen_sidebar():
     with st.sidebar:
-        CHN, params, intpl_func_final, river_params, uploaded_file = fragmented_sidebar()
-    return CHN, params, intpl_func_final, river_params, uploaded_file
+        CHN, params, intpl_x, intpl_y, river_params, uploaded_file = fragmented_sidebar()
+    return CHN, params, intpl_x, intpl_y, river_params, uploaded_file
         
-def gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params, main_width):
+def gen_main_content(CHN, uploaded_file, params, intpl_x, intpl_y, river_params, main_width):
     def click_submit(input_terrain, progressing_text, progressed_text):
         def check_rerun():
             if params != st.session_state.params:
@@ -381,17 +386,16 @@ def gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params,
         if check_rerun():
             st.session_state.params = params
             st.session_state.input_terrain = input_terrain
-            st.session_state.erode_terrain = process_terrain(CHN, params,
-                                                            input_terrain = st.session_state.input_terrain, 
+            st.session_state.erode_terrain, st.session_state.input_display = process_terrain(CHN, params,
+                                                            input_terrain = st.session_state.input_terrain,
+                                                            intpl_inputs = (intpl_x, intpl_y),
                                                             progressing_text = progressing_text, 
                                                             progressed_text = progressed_text)
         if river_params is None:
-            output_terrain_no_river = intpl_func_final(st.session_state.erode_terrain)
-            st.session_state.output_terrain = output_terrain_no_river
+            st.session_state.output_terrain = st.session_state.erode_terrain
         else:
-            output_terrain_no_river = intpl_func_final(st.session_state.erode_terrain)
             river_terrain = add_rivers_to_terrain(st.session_state.erode_terrain, params, river_params)
-            st.session_state.output_terrain = np.clip(output_terrain_no_river - river_terrain, 0, 4000)
+            st.session_state.output_terrain = np.clip(st.session_state.erode_terrain - river_terrain, 0, 4000)
             
     # Main content
     st.title("Cities Skyline II Terrain Modifier" if not CHN else "城市天际线2：地形美化工具")
@@ -411,11 +415,11 @@ def gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params,
     
         click_submit(input_terrain, progressing_text, progressed_text)
         st.session_state.submitted = False
-
-    if st.session_state.input_terrain is not None:
-        input_plot_terrain = cv2.resize(st.session_state.input_terrain, (512, 512))
+    color_continuous_scale = get_color_scale(params['min_altitude'], params['max_altitude'])
+    if st.session_state.input_display is not None:
+        input_plot_terrain = cv2.resize(st.session_state.input_display, (512, 512))
         if not threeD:
-            input_map = go.Figure(data=go.Contour(z=input_plot_terrain, colorscale=color_continuous_scale))
+            input_map = go.Figure(data=go.Contour(z=input_plot_terrain, colorscale=color_continuous_scale, contours=dict(coloring = 'fill')))
             input_map.add_hline(y=0.375*512, line_width=3, line_dash="dash", line_color="black")
             input_map.add_hline(y=(1-0.375)*512, line_width=3, line_dash="dash", line_color="black")
             input_map.add_vline(x=0.375*512, line_width=3, line_dash="dash", line_color="black")
@@ -428,7 +432,7 @@ def gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params,
     if st.session_state.output_terrain is not None:
         output_plot_terrain = cv2.resize(st.session_state.output_terrain, (512, 512))
         if not threeD:
-            output_map = go.Figure(data=go.Contour(z=output_plot_terrain, colorscale=color_continuous_scale))
+            output_map = go.Figure(data=go.Contour(z=output_plot_terrain, colorscale=color_continuous_scale, contours=dict(coloring = 'fill')))
             output_map.add_hline(y=0.375*512, line_width=3, line_dash="dash", line_color="black")
             output_map.add_hline(y=(1-0.375)*512, line_width=3, line_dash="dash", line_color="black")
             output_map.add_vline(x=0.375*512, line_width=3, line_dash="dash", line_color="black")
@@ -471,8 +475,8 @@ def main():
     st.set_page_config(layout="wide")
     main_width = st_dimensions(key="main")
     main_width = main_width['width'] if main_width is not None else 1400
-    CHN, params, intpl_func_final, river_params, uploaded_file = gen_sidebar()
-    gen_main_content(CHN, uploaded_file, params, intpl_func_final, river_params, main_width)
+    CHN, params, intpl_x, intpl_y, river_params, uploaded_file = gen_sidebar()
+    gen_main_content(CHN, uploaded_file, params, intpl_x, intpl_y, river_params, main_width)
     if st.session_state.show_warning:
         show_warning(st.session_state.CHN)
         st.session_state.show_warning = False
