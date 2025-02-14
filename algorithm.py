@@ -107,8 +107,12 @@ def process_terrain(CHN, params, input_terrain, intpl_inputs, progressing_text, 
         input_weight = (input_weight>0) * input_weight / np.max(input_weight) + (input_weight<0) * input_weight / np.min(input_weight)
         input_weight = normalize(input_weight, (0, params['noise_weight']))
         # apply the noise on the map
-        terrain = (1-input_weight)*input_terrain + input_weight*noise_terrain
-        terrain = (1-params['noise_weight'])*terrain + params['noise_weight']*noise_terrain
+        noise_factors = normalize(noise_terrain, bounds=(0, params['noise_weight']))
+        terrain = (1-input_weight)*input_terrain + input_weight*noise_factors
+        terrain = (input_terrain > 500) * (1-noise_factors) * (input_terrain - 500)
+        terrain += (input_terrain < 500) * (1-noise_factors) * (input_terrain - 500) + 500
+        avg_factors = sigmoid(params['noise_weight'], 1, 0.9)
+        terrain = (1-avg_factors) * terrain + avg_factors * (params['noise_weight'] * (noise_terrain - 500) + 500)
 
     terrain = normalize(terrain, bounds)
     terrain = intpl_func(terrain)
