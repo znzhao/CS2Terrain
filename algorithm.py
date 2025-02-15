@@ -119,8 +119,11 @@ def process_terrain(CHN, params, input_terrain, intpl_inputs, progressing_text, 
 
     # get levels:
     target = copy.deepcopy(terrain)
-    weight = (target > max(levels)) * (target - max(levels))/ (np.max(target) - max(levels)) 
-    weight += (target < min(levels)) * (min(levels) - target) / (min(levels) - np.min(target)) 
+    weight = np.zeros_like(target)
+    if (np.max(target) - max(levels)) > 0:
+        weight += (target > max(levels)) * (target - max(levels))/ (np.max(target) - max(levels)) 
+    if (min(levels) - np.min(target)) > 0:
+        weight += (target < min(levels)) * (min(levels) - target) / (min(levels) - np.min(target))
     weight = sigmoid(weight, 10, 0.3)
     # erode the terrain
     if params['erosion_params']['erosion']:
