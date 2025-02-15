@@ -126,15 +126,20 @@ def process_terrain(CHN, params, input_terrain, intpl_inputs, progressing_text, 
     if params['erosion_params']['erosion']:
         shift_bounds = (params['min_altitude'], params['max_altitude'])
         shift_terrain = erode(terrain, params['erosion_params'], shift_bounds, progressing_text, progressed_text)
-
-        mounts = np.select([target > max(levels)], [shift_terrain], np.nan)
-        mounts = mounts - abs(np.nanmin(mounts))
-        mounts = np.nan_to_num(mounts, nan = 0)
-        mounts = normalize(mounts, (0, params['max_altitude'] - max(levels)))
-        seas = np.select([target < min(levels)], [shift_terrain], np.nan)
-        seas = seas - abs(np.nanmax(seas))
-        seas = np.nan_to_num(seas, nan = 0)
-        seas = normalize(seas, (params['min_altitude'] - min(levels), 0))
+        if max(levels) != max(target):
+            mounts = np.select([target > max(levels)], [shift_terrain], np.nan)
+            mounts = mounts - abs(np.nanmin(mounts))
+            mounts = np.nan_to_num(mounts, nan = 0)
+            mounts = normalize(mounts, (0, params['max_altitude'] - max(levels)))
+        else:
+            mounts = np.zeros_like(terrain)
+        if min(levels) != min(target):
+            seas = np.select([target < min(levels)], [shift_terrain], np.nan)
+            seas = seas - abs(np.nanmax(seas))
+            seas = np.nan_to_num(seas, nan = 0)
+            seas = normalize(seas, (params['min_altitude'] - min(levels), 0))
+        else:
+            seas = np.zeros_like(terrain)
         shift_terrain = mounts + seas
 
         flats = target * (target <= max(levels)) * (target >= min(levels)) + min(levels)*(target < min(levels)) + max(levels)*(target > max(levels))
